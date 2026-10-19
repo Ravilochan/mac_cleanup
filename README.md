@@ -12,7 +12,7 @@ story and numbers.
 ## Install
 
 ```sh
-git clone https://github.com/Ravilochan/mac-disk-cleanup.git ~/mac-cleanup
+git clone https://github.com/Ravilochan/mac_cleanup.git ~/mac-cleanup
 ln -s ~/mac-cleanup/cleanup.sh ~/.local/bin/mac-cleanup  # if ~/.local/bin is on PATH
 ```
 

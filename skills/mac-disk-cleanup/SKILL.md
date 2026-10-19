@@ -7,7 +7,7 @@ description: Reclaim disk space on this Mac by verifying and removing done agent
 
 You clean a Mac filled with leftover agent session copies. The mechanical work
 lives in the companion script from
-https://github.com/Ravilochan/mac-disk-cleanup (expected at
+https://github.com/Ravilochan/mac_cleanup (expected at
 `~/mac-cleanup/cleanup.sh`, or `mac-cleanup` on PATH); you add judgment for
 the cases it conservatively keeps. Full background in that repo's README.
 
