@@ -236,10 +236,11 @@ say "--- T3 logs older than 7 days ---"
 if [ -d "$HOME/.t3/userdata/logs" ]; then
   while IFS= read -r f; do rm_path "$f" "old T3 log"; done < <(find "$HOME/.t3/userdata/logs" -type f -mtime +7 2>/dev/null)
 fi
-say "--- Codex leftovers (only if Codex not installed) ---"
+say "--- Codex leftovers (only if Codex not installed and idle) ---"
 if [ ! -d /Applications/Codex.app ] && [ ! -d "$HOME/Applications/Codex.app" ] \
    && ! command -v codex >/dev/null 2>&1 \
-   && ! ps aux 2>/dev/null | grep -i "[c]odex.app" | grep -q .; then
+   && ! ps aux 2>/dev/null | grep -i "[c]odex.app" | grep -q . \
+   && ! find "$HOME/.codex" -mmin -$((STALE_HOURS*60)) -print -quit 2>/dev/null | grep -q .; then
   for p in "$HOME/.codex/plugins" "$HOME/.codex/.tmp" "$HOME/.codex/cache" \
            "$HOME/.codex/computer-use" "$HOME/.codex/vendor_imports" \
            "$HOME/.codex/logs_2.sqlite" "$HOME/.codex/logs_2.sqlite-shm" "$HOME/.codex/logs_2.sqlite-wal" \
