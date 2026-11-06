@@ -44,8 +44,8 @@ the cases it conservatively keeps. Full background in that repo's README.
 ## Scope notes
 
 - Candidate copies: `~/.t3/worktrees/*/*`, `~/.codex/worktrees/*`,
-  `<projects>/*/.claude/worktrees/*`, linked top-level duplicates, `/tmp`
-  review sandboxes registered in git, orphan transcripts, old logs.
+  `<projects>/*/.claude/worktrees/*`, linked top-level duplicates, any other
+  worktree registered in git, orphan transcripts, old logs.
 - Caches handled by the script: `mo clean` (non-interactive),
   `pnpm store prune`, Docker dangling/builder data only when the daemon
   runs. Codex leftovers only when Codex is not installed.

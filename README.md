@@ -49,7 +49,7 @@ CLEANUP_PROJECT_ROOTS="$HOME/work $HOME/personal" mac-cleanup --execute
    `<projects>/*/.claude/worktrees/*`
 2. Linked duplicate checkouts (top-level dirs whose `.git` is a file) —
    only when fully merged
-3. `/tmp` review sandboxes registered as git worktrees
+3. Any other worktree registered in git (review farms, `/tmp` sandboxes)
 4. Transcripts for worktrees that no longer exist, Muse sessions older than
    14 days, T3 logs older than 7 days
 5. Orphaned Codex app data (only when Codex is not installed)

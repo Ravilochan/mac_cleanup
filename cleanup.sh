@@ -6,7 +6,7 @@
 #      <project>/*/.claude/worktrees/*, ~/.codex/worktrees/*
 #   2. Linked duplicate checkouts (top-level dirs whose .git is a file, i.e.
 #      a gitlink into another local repo) — only when fully merged.
-#   3. /tmp review sandboxes registered as git worktrees.
+#   3. Any other worktree registered in git (review farms, /tmp sandboxes).
 #   4. Transcripts/sessions for worktrees that no longer exist (orphans),
 #      Muse session logs older than 14 days, T3 logs older than 7 days.
 #   5. Orphaned Codex app leftovers (only when Codex is not installed).
@@ -113,7 +113,9 @@ transcript_alive() { # $1 = transcript dir basename; true if its path is a live 
 }
 main_repo_of() { # toplevel of the repo owning this (possibly linked) worktree
   local common; common="$(git -C "$1" rev-parse --git-common-dir 2>/dev/null)" || return 1
-  git --git-dir="$common" rev-parse --show-toplevel 2>/dev/null
+  # NOTE: resolve via cd, not `git --git-dir=... rev-parse --show-toplevel`,
+  # which returns the *caller's* directory instead of the repo root.
+  ( cd "$common/.." 2>/dev/null && git rev-parse --show-toplevel 2>/dev/null ) || return 1
 }
 remove_wt() { # $1 = worktree path (uses owning repo for registry cleanup)
   local wt="$1" top
@@ -135,6 +137,7 @@ purge_regenerables() { # strip rebuildable dirs, keep all git-tracked/unique wor
 consider_wt() {
   local wt="$1" strict="$2" why=""
   wt="${wt%/}"
+  [ -e "$wt" ] || return 0 # vanished mid-run (removed by an earlier pass)
   if [ -z "$(ls -A "$wt" 2>/dev/null)" ]; then # empty dir: nothing to lose
     if is_idle "$wt" && find "$wt" -maxdepth 0 -mmin +"$((STALE_HOURS*60))" 2>/dev/null | grep -q .; then
       if [ "$DRY_RUN" = 1 ]; then say "DEL   $wt (empty dir)"; DELETED=$((DELETED+1));
@@ -185,16 +188,20 @@ for root in $PROJECT_ROOTS; do
     [ -f "$d/.git" ] && consider_wt "$d" 1 # .git is a file => linked copy
   done
 done
-say "--- /tmp worktrees registered in git ---"
-TMP_WTS=""
+say "--- registered worktrees missed by path scans (e.g. review farms, /tmp) ---"
 for repo in $MAIN_REPOS; do
-  TMP_WTS="$TMP_WTS$(git -C "$repo" worktree list --porcelain 2>/dev/null | grep '^worktree ' | cut -d' ' -f2-)
-"
+  main="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)" || continue
+  while IFS= read -r wt; do
+    [ -n "$wt" ] || continue
+    [ "$wt" = "$main" ] && continue # never the main checkout itself
+    case "$wt" in
+      "$T3_WT"/*|"$CODEX_WT"/*|*/.claude/worktrees/*) continue ;; # covered above
+    esac
+    strict=0
+    for root in $PROJECT_ROOTS; do [ "$(dirname "$wt")" = "$root" ] && strict=1; done
+    consider_wt "$wt" "$strict"
+  done < <(git -C "$repo" worktree list --porcelain 2>/dev/null | grep '^worktree ' | cut -d' ' -f2-)
 done
-while IFS= read -r wt; do
-  [ -n "$wt" ] || continue
-  case "$wt" in /tmp/*|/private/tmp/*) consider_wt "$wt" 0 ;; esac
-done <<< "$TMP_WTS"
 if [ "$DRY_RUN" = 0 ]; then
   for repo in $MAIN_REPOS; do git -C "$repo" worktree prune >>"$LOG" 2>&1; done
   say "pruned stale worktree registry entries"
